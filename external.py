@@ -12,7 +12,8 @@ user_input = {
     "month": 6,
     "year": 2021,
     "offset": 30,
-    "format": "name", 
+    "format": "name",
+    "local_timezone": None, 
     "type": "countries"
 }
 
@@ -24,10 +25,12 @@ user_input_cities = {
     "New York": 10
     },
     "start": "9:00",
-    "end": "20:00",
-    "day": "26",
-    "month": "6",
-    "year": "2021",
+    "end": "20:30",
+    "day": 26,
+    "month": 6,
+    "year": 2021,
+    "offset": 30,
+    "local_timezone": None, 
     "format": None, 
     "type": "cities"
 }

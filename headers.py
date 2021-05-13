@@ -11,6 +11,28 @@ class Date(object):
         self.end = int(re.match("(\d\d?):(\d\d)", user_input["end"]).groups()[0]) + int(re.match("(\d\d?):(\d\d)", user_input["end"]).groups()[1])/60
         self.offset = int(user_input["offset"])/60
 
+class Statistics():
+    
+    def __init__(self, local_time, users, weight):
+        self.local_time = local_time
+        self.users = users
+        self.weight = weight
+        self.timezones = list()
+
+    def __repr__(self):
+        self.timezone_breakdown = ""
+        for timezone in self.timezones:
+            self.timezone_breakdown = f"{self.timezone_breakdown}\n{timezone['timezone']} - Users: {timezone['users']}, Weight: {timezone['weight']}"
+        return f"\nThe total number of available users at {int(self.local_time - self.local_time % 1)}:{self.local_time % 1*60} is {self.users} with a total weight of {self.weight}.\nBreakdown of inputted timezones at this time:\n{self.timezone_breakdown}\n"
+    
+    def addTimezone(self, timezone):
+        self.timezones.append(timezone)
+
+    def changeSum(self, users, weight):
+        self.users = self.users + users
+        self.weight = self.weight + weight
+
+
 cities = pd.read_csv("geolite-2-city-updated-NaN.csv")
 
 strict_countries = {

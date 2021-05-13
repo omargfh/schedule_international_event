@@ -10,7 +10,7 @@ from pycountry import countries
 from tzlocal import get_localzone
 
 from external import user_input, user_input_cities
-from headers import cities, strict_countries, Date
+from headers import cities, strict_countries, Date, Statistics
 
 def validate_user_input(user_input):
 
@@ -39,7 +39,7 @@ def collect_timezones(user_input):
         timezones[timezone] > 0 or timezones.pop(timezone, None)
     return timezones
 
-timezones = collect_timezones(user_input) # TODO: delete
+timezones = collect_timezones(user_input_cities) # TODO: delete
 
 def calculate_time_weight(user_input, timezones):
 
@@ -47,23 +47,24 @@ def calculate_time_weight(user_input, timezones):
     for key, value in timezones.items():
         timezone_obj[pytz.timezone(key)] = value
     
-    t, time_list, local_tz = Date(user_input), list(), get_localzone()
+    t, time_list = Date(user_input), list()
+    local_tz = pytz.timezone(user_input["local_timezone"]) if user_input["local_timezone"] else get_localzone()
     for i in list(np.arange(t.start, t.end + 0.001, t.offset)):
         hour, minute = int(i) if i % 1 == 0 else int(i - i % 1), int(i % 1 * 60)
-        ls = dict(); ls["local"], ls["T-Users"], ls["T-Weight"] = i, 0, 0
+        ls = Statistics(i, 0, 0)
         for timezone, users in timezone_obj.items():
             loc = local_tz.localize(datetime(t.year, t.month, t.day, hour, minute, 0)).astimezone(timezone)
             loc_t = int(loc.strftime("%H")) + ( int(loc.strftime("%M")) ) / 60
             if loc_t >= t.start and loc_t <= t.end:
                 weight = 100 if users < 10 else users * 10
-                ls[timezone] = {"Available Users": users, "Weight": weight}
-                ls["T-Users"] = ls["T-Users"] + users
-                ls["T-Weight"] = ls["T-Weight"] + weight
+                ls.addTimezone({"timezone": timezone, "users": users, "weight": weight})
+                ls.changeSum(users, weight)
             else:
-                ls[timezone] = {"Available Users": 0, "Weight": 0}
+                ls.addTimezone({"timezone": timezone, "users": 0, "weight": 0})
         time_list.append(ls)
     
-    return sorted(time_list, key=lambda k:k['T-Users'], reverse=True)
+    return sorted(time_list, key=lambda k:k.users, reverse=True)
 
-time_list = calculate_time_weight(user_input, timezones) # TODO: delete
-print([item["T-Weight"] for item in time_list])
+time_list = calculate_time_weight(user_input_cities, timezones) # TODO: delete
+print(f'{[item.users for item in time_list]}\n{[item.weight for item in time_list]}')
+print(time_list)
