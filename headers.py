@@ -1,4 +1,15 @@
 import pandas as pd
+import re
+
+class Date(object):
+
+    def __init__(self, user_input):
+        self.day = int(user_input["day"])
+        self.month = int(user_input["month"])
+        self.year = int(user_input["year"])
+        self.start = int(re.match("(\d\d?):(\d\d)", user_input["start"]).groups()[0]) + int(re.match("(\d\d?):(\d\d)", user_input["start"]).groups()[1])/60
+        self.end = int(re.match("(\d\d?):(\d\d)", user_input["end"]).groups()[0]) + int(re.match("(\d\d?):(\d\d)", user_input["end"]).groups()[1])/60
+        self.offset = int(user_input["offset"])/60
 
 cities = pd.read_csv("geolite-2-city-updated-NaN.csv")
 

@@ -2,10 +2,16 @@ user_input = {
     "entries": {
     "egypt": 50,
     "France": 32,
-    "Congo": 10
+    "Congo": 10,
+    "China": 3,
+    "Japan": 2
     },
     "start": "9:00",
-    "end": "20:00",
+    "end": "20:30",
+    "day": 26,
+    "month": 6,
+    "year": 2021,
+    "offset": 30,
     "format": "name", 
     "type": "countries"
 }
@@ -19,6 +25,9 @@ user_input_cities = {
     },
     "start": "9:00",
     "end": "20:00",
+    "day": "26",
+    "month": "6",
+    "year": "2021",
     "format": None, 
     "type": "cities"
 }
