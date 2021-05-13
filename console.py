@@ -57,10 +57,10 @@ def calculate_time_weight(user_input, timezones):
             loc_t = int(loc.strftime("%H")) + ( int(loc.strftime("%M")) ) / 60
             if loc_t >= t.start and loc_t <= t.end:
                 weight = 100 if users < 10 else users * 10
-                ls.addTimezone({"timezone": timezone, "users": users, "weight": weight})
+                ls.addTimezone(timezone, users, weight)
                 ls.changeSum(users, weight)
             else:
-                ls.addTimezone({"timezone": timezone, "users": 0, "weight": 0})
+                ls.addTimezone(timezone, 0, 0)
         time_list.append(ls)
     
     return sorted(time_list, key=lambda k:k.users, reverse=True)

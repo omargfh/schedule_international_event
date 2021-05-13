@@ -20,13 +20,18 @@ class Statistics():
         self.timezones = list()
 
     def __repr__(self):
+        
+        hour = int(self.local_time - self.local_time % 1)
+        minute = int(self.local_time % 1*60) if (self.local_time % 1) * 60 > 10 else f"0{int(self.local_time % 1*60)}"
+        
         self.timezone_breakdown = ""
         for timezone in self.timezones:
             self.timezone_breakdown = f"{self.timezone_breakdown}\n{timezone['timezone']} - Users: {timezone['users']}, Weight: {timezone['weight']}"
-        return f"\nThe total number of available users at {int(self.local_time - self.local_time % 1)}:{self.local_time % 1*60} is {self.users} with a total weight of {self.weight}.\nBreakdown of inputted timezones at this time:\n{self.timezone_breakdown}\n"
+
+        return f"\nThe total number of available users at {hour}:{minute} is {self.users} with a total weight of {self.weight}.\nBreakdown of inputted timezones at this time:\n{self.timezone_breakdown}\n"
     
-    def addTimezone(self, timezone):
-        self.timezones.append(timezone)
+    def addTimezone(self, timezone, users, weight):
+        self.timezones.append({"timezone": timezone, "users": users, "weight": weight})
 
     def changeSum(self, users, weight):
         self.users = self.users + users
