@@ -10,7 +10,7 @@ from pycountry import countries
 from tzlocal import get_localzone
 
 from external import user_input, user_input_cities
-from headers import cities, strict_countries, Date, Statistics
+from headers import cities, strict_countries, InputParser, Statistics, Time
 
 def validate_user_input(user_input):
 
@@ -39,7 +39,21 @@ def collect_timezones(user_input):
         timezones[timezone] > 0 or timezones.pop(timezone, None)
     return timezones
 
-timezones = collect_timezones(user_input_cities) # TODO: delete
+def calculate_weight(loc_t, user_input, users, returnPref=False):
+    score, pref = 4, False
+    country_weight = 0 if user_input["country-weight"] is None else user_input["country-weight"]
+    weight = country_weight if users * 10 < country_weight else users * score
+    if user_input["preferrable-start"] == None or user_input["preferrable-start"] == 0:
+        weight = weight + (users * score)
+    elif Time(user_input["preferrable-start"]).value <= loc_t and Time(user_input["preferrable-end"]).value >= loc_t:
+        weight = weight + (users * (score + 1))
+        pref = True
+    
+    if returnPref:
+        return pref
+    else:
+        return weight if not weight == None else 0
+
 
 def calculate_time_weight(user_input, timezones):
 
@@ -47,24 +61,26 @@ def calculate_time_weight(user_input, timezones):
     for key, value in timezones.items():
         timezone_obj[pytz.timezone(key)] = value
     
-    t, time_list = Date(user_input), list()
+    t, time_list = InputParser(user_input), list()
     local_tz = pytz.timezone(user_input["local_timezone"]) if user_input["local_timezone"] else get_localzone()
     for i in list(np.arange(t.start, t.end + 0.001, t.offset)):
         hour, minute = int(i) if i % 1 == 0 else int(i - i % 1), int(i % 1 * 60)
-        ls = Statistics(i, 0, 0)
+        ls = Statistics(i, 0, 0, t.users)
         for timezone, users in timezone_obj.items():
             loc = local_tz.localize(datetime(t.year, t.month, t.day, hour, minute, 0)).astimezone(timezone)
             loc_t = int(loc.strftime("%H")) + ( int(loc.strftime("%M")) ) / 60
             if loc_t >= t.start and loc_t <= t.end:
-                weight = 100 if users < 10 else users * 10
-                ls.addTimezone(timezone, users, weight)
+                weight = calculate_weight(loc_t, user_input, users)
+                isPreferrable = calculate_weight(loc_t, user_input, users, True)
+                ls.addTimezone(timezone, users, weight, loc_t, isPreferrable)
                 ls.changeSum(users, weight)
             else:
-                ls.addTimezone(timezone, 0, 0)
+                ls.addTimezone(timezone, 0, 0, loc_t, False)
         time_list.append(ls)
     
     return sorted(time_list, key=lambda k:k.users, reverse=True)
 
-time_list = calculate_time_weight(user_input_cities, timezones) # TODO: delete
+timezones = collect_timezones(user_input) # TODO: delete
+time_list = calculate_time_weight(user_input, timezones) # TODO: delete
 print(f'{[item.users for item in time_list]}\n{[item.weight for item in time_list]}')
 print(time_list)
