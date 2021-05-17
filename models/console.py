@@ -4,7 +4,6 @@ import pytz
 
 import numpy as np
 import pandas as pd
-
 import re
 
 import matplotlib.pyplot as plt
@@ -13,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 from pycountry import countries
 from tzlocal import get_localzone
 
-from external import user_input, user_input_cities
+from input import user_input, user_input_cities
 from headers import Statistics, cities, strict_countries, InputParser, TimezoneBreakdown, Time, get_concat_h, get_concat_v
 
 def validate_user_input(user_input):
