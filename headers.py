@@ -1,5 +1,72 @@
 import pandas as pd
 import re
+from PIL import Image
+
+class Statistics(object):
+
+    class StatisticsData(object):
+        
+        def __init__(self, start, end):
+            self.start = start
+            self.end = end
+
+        def adjust(self, time):
+            if time < self.start:
+                self.start = time
+            elif time > self.end:
+                self.end = time
+
+        def formattedTime(time):
+            return f"{Time(time.start).formatted}-{Time(time.end).formatted}"
+
+        def __repr__(self):
+            
+            return f"Start: {self.start}, End: {self.end}"
+
+    def __init__(self, MAX_USERS):
+        self.MAX_USERS = MAX_USERS
+        self.allTimesByUsers = dict()
+        self.allTimesByWeight = dict()
+
+    def __repr__(self):
+        self.sort()
+        return str([self.allTimesByUsers, self.allTimesByWeight])
+
+    def addTime(self, time, users, weight):
+        for _el, _parent in {users: self.allTimesByUsers, weight: self.allTimesByWeight}.items():
+            if _el not in _parent.keys():
+                _parent[_el] = self.StatisticsData(time, time)
+            else:
+                _parent[_el].adjust(time)
+
+    def toList(self):
+        a, b = list(), list()
+        for key, value in self.allTimesByUsers.items():
+            a.append([key, value.start, value.end])
+        for key, value in self.allTimesByWeight.items():
+            b.append([key, value.start, value.end])
+        self.allTimesByUsers, self.allTimesByWeight = a, b
+
+    def sort(self, reverse=True):
+        if type(self.allTimesByUsers) != type(list()):
+            self.toList()
+        self.allTimesByUsers = sorted(self.allTimesByUsers, key=lambda k:k[0], reverse=reverse)
+        self.allTimesByWeight = sorted(self.allTimesByWeight, key=lambda k:k[0], reverse=reverse)
+
+    def listToTime(self, listIn):
+        return self.StatisticsData(listIn[1], listIn[2])
+
+    def setOptimalTime(self):
+
+        if type(self.allTimesByUsers) == type(list()):
+            self.optimalTimeUsers = self.listToTime(self.allTimesByUsers[0])
+
+        if type(self.allTimesByWeight) == type(list()):
+            self.optimalTimeWeight = self.listToTime(self.allTimesByWeight[0])
+
+    def organize_data(self):
+        self.sort()
+        self.setOptimalTime()
 
 class Time(object):
 
@@ -36,7 +103,7 @@ class InputParser(object):
         for country, users in user_input["entries"].items():
             self.users = self.users + users
 
-class Statistics():
+class TimezoneBreakdown(object):
     
     def __init__(self, local_time, users, weight, MAX_USERS):
         self.local_time = local_time
@@ -63,6 +130,17 @@ class Statistics():
         self.users = self.users + users
         self.weight = self.weight + weight
 
+def get_concat_h(im1, im2):
+    dst = Image.new('RGB', (im1.width + im2.width, im1.height))
+    dst.paste(im1, (0, 0))
+    dst.paste(im2, (im1.width, 0))
+    return dst
+
+def get_concat_v(im1, im2):
+    dst = Image.new('RGB', (im1.width, im1.height + im2.height))
+    dst.paste(im1, (0, 0))
+    dst.paste(im2, (0, im1.height))
+    return dst
 
 cities = pd.read_csv("geolite-2-city-updated-NaN.csv")
 

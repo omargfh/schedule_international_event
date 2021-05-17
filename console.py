@@ -4,13 +4,17 @@ import pytz
 
 import numpy as np
 import pandas as pd
-import re as re
 
+import re
+
+import matplotlib.pyplot as plt
+
+from PIL import Image, ImageDraw, ImageFont
 from pycountry import countries
 from tzlocal import get_localzone
 
 from external import user_input, user_input_cities
-from headers import cities, strict_countries, InputParser, Statistics, Time
+from headers import Statistics, cities, strict_countries, InputParser, TimezoneBreakdown, Time, get_concat_h, get_concat_v
 
 def validate_user_input(user_input):
 
@@ -39,13 +43,13 @@ def collect_timezones(user_input):
         timezones[timezone] > 0 or timezones.pop(timezone, None)
     return timezones
 
-def calculate_weight(loc_t, user_input, users, returnPref=False):
+def calculate_weight(loc_t, c_weight, pref_start, pref_end, users, returnPref=False):
     score, pref = 4, False
-    country_weight = 0 if user_input["country-weight"] is None else user_input["country-weight"]
+    country_weight = 0 if c_weight is None else c_weight
     weight = country_weight if users * 10 < country_weight else users * score
-    if user_input["preferrable-start"] == None or user_input["preferrable-start"] == 0:
+    if pref_start == None or pref_start == 0:
         weight = weight + (users * score)
-    elif Time(user_input["preferrable-start"]).value <= loc_t and Time(user_input["preferrable-end"]).value >= loc_t:
+    elif Time(pref_start).value <= loc_t and Time(pref_end).value >= loc_t:
         weight = weight + (users * (score + 1))
         pref = True
     
@@ -65,13 +69,13 @@ def calculate_time_weight(user_input, timezones):
     local_tz = pytz.timezone(user_input["local_timezone"]) if user_input["local_timezone"] else get_localzone()
     for i in list(np.arange(t.start, t.end + 0.001, t.offset)):
         hour, minute = int(i) if i % 1 == 0 else int(i - i % 1), int(i % 1 * 60)
-        ls = Statistics(i, 0, 0, t.users)
+        ls = TimezoneBreakdown(i, 0, 0, t.users)
         for timezone, users in timezone_obj.items():
             loc = local_tz.localize(datetime(t.year, t.month, t.day, hour, minute, 0)).astimezone(timezone)
             loc_t = int(loc.strftime("%H")) + ( int(loc.strftime("%M")) ) / 60
             if loc_t >= t.start and loc_t <= t.end:
-                weight = calculate_weight(loc_t, user_input, users)
-                isPreferrable = calculate_weight(loc_t, user_input, users, True)
+                weight = calculate_weight(loc_t, user_input["country-weight"], user_input["preferrable-start"], user_input["preferrable-end"], users)
+                isPreferrable = calculate_weight(loc_t, user_input["country-weight"], user_input["preferrable-start"], user_input["preferrable-end"], users, True)
                 ls.addTimezone(timezone, users, weight, loc_t, isPreferrable)
                 ls.changeSum(users, weight)
             else:
@@ -80,7 +84,57 @@ def calculate_time_weight(user_input, timezones):
     
     return sorted(time_list, key=lambda k:k.users, reverse=True)
 
-timezones = collect_timezones(user_input) # TODO: delete
-time_list = calculate_time_weight(user_input, timezones) # TODO: delete
-print(f'{[item.users for item in time_list]}\n{[item.weight for item in time_list]}')
-print(time_list)
+
+def group_data(time_list):
+
+    data = Statistics(time_list[0].MAX_USERS)
+    for timezone_breakdown in time_list:
+        loc_t = Time(float(timezone_breakdown.local_time)).value
+        data.addTime(loc_t, timezone_breakdown.users, timezone_breakdown.weight)
+    
+    data.organize_data()
+    return data
+
+def output_data(data):
+
+    # Users Graph
+    timesByUsers = [data.listToTime(x).formattedTime() for x in sorted(data.allTimesByUsers, key=lambda k:k[1])]
+    valueByUsers = [x[0] for x in sorted(data.allTimesByUsers, key=lambda k:k[1])]
+    fig1, ax1 = plt.subplots()
+    ax1.plot(timesByUsers, valueByUsers, 'bo', timesByUsers, valueByUsers, 'k')
+    ax1.set_title("Available Users by Time")
+    ax1.set_xlabel("Time")
+    ax1.set_ylabel("Available Users")
+    fig1.savefig('users.png')
+
+    # Weight Graph
+    timesByWeight = [data.listToTime(x).formattedTime() for x in sorted(data.allTimesByWeight, key=lambda k:k[1])]
+    valueByWeight = [x[0] for x in sorted(data.allTimesByWeight, key=lambda k:k[1])]
+    fig2, ax2 = plt.subplots()
+    ax2.plot(timesByWeight, valueByWeight, 'bo', timesByWeight, valueByWeight, 'k')
+    ax2.set_title("Time Weight")
+    ax2.set_xlabel("Time")
+    ax2.set_ylabel("Weight")
+    fig2.savefig('weight.png')
+
+    # Concatenate Graphs
+    graphs = get_concat_h(Image.open('users.png'), Image.open('weight.png'))
+    subtext = Image.new('RGB', (graphs.width, 100), color=(256, 256, 256))
+    draw = ImageDraw.Draw(subtext, 'RGB')
+    font = ImageFont.truetype("Font.ttf", 18)
+    msg1 = f"Optimal time (by users): {data.optimalTimeUsers.formattedTime()}"
+    msg2 = f"Optimal time (by weight): {data.optimalTimeWeight.formattedTime()}"
+    w1, h1 = draw.textsize(msg1, font=font)
+    w2, h2 = draw.textsize(msg2, font=font)
+    draw.text(( (graphs.width / 2 - w1)/2, (100-h1)/2 ), msg1, (0, 0, 0, 255),font=font)
+    draw.text(( (graphs.width / 2 - w2)/2 + graphs.width/2, (100-h2)/2 ), msg2, (0, 0, 0, 255),font=font)
+    conc = get_concat_v(graphs, subtext).save('final.png')
+
+
+def input_to_graphs(u_in):
+    timezones = collect_timezones(u_in) # TODO: delete
+    time_list = calculate_time_weight(u_in, timezones) # TODO: delete
+    data = group_data(time_list) # TODO: delete
+    output_data(data)
+
+input_to_graphs(user_input)
