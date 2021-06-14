@@ -142,7 +142,7 @@ def get_concat_v(im1, im2):
     dst.paste(im2, (0, im1.height))
     return dst
 
-cities = pd.read_csv("geolite-2-city-updated-NaN.csv")
+cities = pd.read_csv("models/data/geolite-2-city-updated-NaN.csv")
 
 strict_countries = {
     "FR":"Europe/Paris",

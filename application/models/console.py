@@ -12,8 +12,8 @@ from PIL import Image, ImageDraw, ImageFont
 from pycountry import countries
 from tzlocal import get_localzone
 
-from input import user_input, user_input_cities
-from headers import Statistics, cities, strict_countries, InputParser, TimezoneBreakdown, Time, get_concat_h, get_concat_v
+from models.input import user_input, user_input_cities
+from models.headers import Statistics, cities, strict_countries, InputParser, TimezoneBreakdown, Time, get_concat_h, get_concat_v
 
 def validate_user_input(user_input):
 
@@ -104,7 +104,7 @@ def output_data(data):
     ax1.set_title("Available Users by Time")
     ax1.set_xlabel("Time")
     ax1.set_ylabel("Available Users")
-    fig1.savefig('users.png')
+    fig1.savefig('models/output/users.png')
 
     # Weight Graph
     timesByWeight = [data.listToTime(x).formattedTime() for x in sorted(data.allTimesByWeight, key=lambda k:k[1])]
@@ -114,26 +114,27 @@ def output_data(data):
     ax2.set_title("Time Weight")
     ax2.set_xlabel("Time")
     ax2.set_ylabel("Weight")
-    fig2.savefig('weight.png')
+    fig2.savefig('models/output/weight.png')
 
     # Concatenate Graphs
-    graphs = get_concat_h(Image.open('users.png'), Image.open('weight.png'))
+    graphs = get_concat_h(Image.open('models/output/users.png'), Image.open('models/output/weight.png'))
     subtext = Image.new('RGB', (graphs.width, 100), color=(256, 256, 256))
     draw = ImageDraw.Draw(subtext, 'RGB')
-    font = ImageFont.truetype("Font.ttf", 18)
+    font = ImageFont.truetype("models/data/Font.ttf", 18)
     msg1 = f"Optimal time (by users): {data.optimalTimeUsers.formattedTime()}"
     msg2 = f"Optimal time (by weight): {data.optimalTimeWeight.formattedTime()}"
     w1, h1 = draw.textsize(msg1, font=font)
     w2, h2 = draw.textsize(msg2, font=font)
     draw.text(( (graphs.width / 2 - w1)/2, (100-h1)/2 ), msg1, (0, 0, 0, 255),font=font)
     draw.text(( (graphs.width / 2 - w2)/2 + graphs.width/2, (100-h2)/2 ), msg2, (0, 0, 0, 255),font=font)
-    conc = get_concat_v(graphs, subtext).save('final.png')
+    conc = get_concat_v(graphs, subtext).save('static/final.png')
 
 
 def input_to_graphs(u_in):
-    timezones = collect_timezones(u_in) # TODO: delete
-    time_list = calculate_time_weight(u_in, timezones) # TODO: delete
-    data = group_data(time_list) # TODO: delete
+    validate_user_input(u_in)
+    timezones = collect_timezones(u_in)
+    time_list = calculate_time_weight(u_in, timezones)
+    data = group_data(time_list)
     output_data(data)
 
 input_to_graphs(user_input)
