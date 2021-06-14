@@ -8,7 +8,7 @@ import re
 
 import matplotlib.pyplot as plt
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from pycountry import countries
 from tzlocal import get_localzone
 
@@ -94,13 +94,13 @@ def group_data(time_list):
     data.organize_data()
     return data
 
-def output_data(data):
+def output_data(data, output_id):
 
     # Users Graph
     timesByUsers = [data.listToTime(x).formattedTime() for x in sorted(data.allTimesByUsers, key=lambda k:k[1])]
     valueByUsers = [x[0] for x in sorted(data.allTimesByUsers, key=lambda k:k[1])]
     fig1, ax1 = plt.subplots()
-    ax1.plot(timesByUsers, valueByUsers, 'bo', timesByUsers, valueByUsers, 'k')
+    ax1.plot(timesByUsers, valueByUsers, 'co', timesByUsers, valueByUsers, 'k')
     ax1.set_title("Available Users by Time")
     ax1.set_xlabel("Time")
     ax1.set_ylabel("Available Users")
@@ -110,7 +110,7 @@ def output_data(data):
     timesByWeight = [data.listToTime(x).formattedTime() for x in sorted(data.allTimesByWeight, key=lambda k:k[1])]
     valueByWeight = [x[0] for x in sorted(data.allTimesByWeight, key=lambda k:k[1])]
     fig2, ax2 = plt.subplots()
-    ax2.plot(timesByWeight, valueByWeight, 'bo', timesByWeight, valueByWeight, 'k')
+    ax2.plot(timesByWeight, valueByWeight, 'co', timesByWeight, valueByWeight, 'k')
     ax2.set_title("Time Weight")
     ax2.set_xlabel("Time")
     ax2.set_ylabel("Weight")
@@ -127,14 +127,13 @@ def output_data(data):
     w2, h2 = draw.textsize(msg2, font=font)
     draw.text(( (graphs.width / 2 - w1)/2, (100-h1)/2 ), msg1, (0, 0, 0, 255),font=font)
     draw.text(( (graphs.width / 2 - w2)/2 + graphs.width/2, (100-h2)/2 ), msg2, (0, 0, 0, 255),font=font)
-    conc = get_concat_v(graphs, subtext).save('static/final.png')
+    conc = get_concat_v(graphs, subtext).save(f'static/{output_id}-light.png')
+    dark = ImageOps.invert(Image.open(f'static/{output_id}-light.png')).save(f'static/{output_id}-dark.png')
 
 
-def input_to_graphs(u_in):
+def input_to_graphs(u_in, output_id):
     validate_user_input(u_in)
     timezones = collect_timezones(u_in)
     time_list = calculate_time_weight(u_in, timezones)
     data = group_data(time_list)
-    output_data(data)
-
-input_to_graphs(user_input)
+    output_data(data, output_id)

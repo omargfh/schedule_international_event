@@ -1,0 +1,27 @@
+* {
+    color: white;
+}
+
+.stick-footer {
+    min-height: 76vh;
+}
+
+.sidebar h2 {
+    font-family: 'Cookie', cursive;
+    text-align: center;
+}
+
+.form-control:focus {
+    color: #495057;
+    border-color: #4e4e4e;
+    box-shadow: 0 0 0 0.2rem rgb(97 97 97 / 25%);
+}
+
+.form-control {
+    color: #495057;
+}
+
+i.req::before {
+    content: " *";
+    color: rgb(255, 0, 0);
+}
