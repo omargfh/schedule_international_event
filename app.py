@@ -23,6 +23,7 @@ def after_request(response):
 def index():
     if request.method == "POST":
         print(request.form.get("js_obj"))
+    input_to_graphs(user_input, "50")
     return render_template("index.html")
 
 @app.route('/results')
