@@ -6,11 +6,14 @@
             <h2>
                 Recent Results
             </h2>
+            <div id="sidebar-content">
+
+            </div>
         </div>
     </div>
     <div class="col-lg-8">
         <div class="d-flex align-content-center justify-content-center">
-            <form style="width: 90%;" action="/" method="GET">
+            <form style="width: 90%;" action="/" method="POST">
                 <div class="form-group">
                     <div class="form-row">
                         <div class="form-group col-md-6 ">
@@ -471,7 +474,7 @@
                         </div>
                     </div>
                     <div class="form-row d-flex justify-content-end">
-                        <button type="submit" class="btn btn-dark" id="submit">Submit</button>
+                        <button type="submit" class="btn btn-dark" id="submit">Calculate</button>
                     </div>
                 </div>
             </form>
@@ -491,13 +494,50 @@
         let g = (el) => $(el).get(0).value
         let v = (el) => $(el).get(0).valueAsDate
 
+        // Recent Results
+        n = localStorage.getItem('ls_res').split(",").reverse()
+        if (n.includes("null")) {
+            n.splice(n.indexOf("null"), 1)
+        }
+        html = ""
+        n.forEach((element, i) => {
+            if (i <= 2) {
+                html += `<a href="/results?id=${element}&saveNew=false"><img class="result_image_small" src="/static/${element}-dark.png"></a>`
+            }
+        });
+        $("#sidebar-content")[0].innerHTML = html
+
         // Adjust Python input based on form input
         $("input").on("change paste keyup", () => {
+            // Define
             let [start, end, pStart, pEnd] = [g('#inputStartTime'), g('#inputEndTime'), g('#inputEStartTime'), g('#inputEEndTime')]
             let [day, month, year] = [v('#inputDate').getDate(), v('#inputDate').getMonth() + 1, v('#inputDate').getFullYear()]
             let localTimezone = $('#inputLT').get(0).checked ? null :
                 $('#inputLocalTimezone').get(0).value == "" ? null : $('#inputLocalTimezone').get(0).value
             let [cw, offset] = [g('#inputCW'), g('#inputOffset')]
+
+            // Validate 
+            window.changeBorderColor(["#inputCW", "#inputDate", "#inputOffset", "#inputLocalTimezone"], "green")
+
+            if (parseInt(start.slice(0, 2)) >= parseInt(end.slice(0, 2))) {
+                if (parseInt(start.slice(0, 2)) == parseInt(end.slice(0, 2)) && parseInt(start.slice(3, 5)) < parseInt(end.slice(3, 5))) {
+                    window.changeBorderColor(["#inputStartTime", "#inputEndTime"], "green")
+                } else {
+                    alert("Start time must occur before end time.")
+                    window.changeBorderColor(["#inputStartTime", "#inputEndTime"], "red")
+                }
+            } else if (start !== "" && end !== "") {
+                window.changeBorderColor(["#inputStartTime", "#inputEndTime"], "green")
+            }
+
+            if (pStart === "") {
+                pStart = start
+            }
+            if (pEnd === "") {
+                pEnd = end
+            }
+
+            // Update
             window.obj = {
                 "entries": {
                     "EG": 1,
@@ -509,18 +549,36 @@
                 "end": end,
                 "preferrable-start": pStart,
                 "preferrable-end": pEnd,
-                "country-weight": cw,
-                "day": day,
-                "month": month,
-                "year": year,
-                "offset": offset,
+                "country-weight": parseInt(cw),
+                "day": parseInt(day),
+                "month": parseInt(month),
+                "year": parseInt(year),
+                "offset": parseInt(offset),
                 "format": "alpha_2",
                 "local_timezone": localTimezone,
                 "type": "countries"
             }
-            $('#post_data').get(0).value = "user_input = " + JSON.stringify(window.obj, null, 2).replace("null", "None")
+            $('#post_data').get(0).value = JSON.stringify(window.obj, null, 2)
         })
-
+        $("textarea").on("change paste keyup", (el) => {
+            // Sync
+            el.target.value = el.target.value.replace("None", "null")
+            let l = JSON.parse(el.target.value)
+            console.log(l["start"])
+            $("#inputStartTime")[0].value = l["start"].slice(0, 2).includes(":") ? 0 + l["start"] : l["start"]
+            $("#inputEndTime")[0].value = l["end"].slice(0, 2).includes(":") ? 0 + l["end"] : l["end"]
+            $("#inputEStartTime")[0].value = $("#inputEStartTime")[0].value == "" ? l["start"] : l["preferrable-start"]
+            $("#inputEEndTime")[0].value = $("#inputEEndTime")[0].value == "" ? l["end"] : l["preferrable-end"]
+            $("#inputDate")[0].value = `${l["year"]}-${l["month"]<10?"0"+l["month"]:l["month"]}-${l["day"]}`
+            $("#inputCW")[0].value = l["country-weight"]
+            $("#inputOffset")[0].value = l["offset"]
+            if (l["local_timezone"] !== null) {
+                $("#inputLocalTimezone")[0].value = l["local_timezone"]
+            }
+        })
+        $("textarea").change(() => {
+            $("input").keyup()
+        })
     })
 </script>
 {% endblock %}

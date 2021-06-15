@@ -121,3 +121,18 @@ textarea.form-control:focus {
 .btn-copy svg {
     transform: translate(-5.8px, -6px);
 }
+
+
+/* Results of Images */
+
+.result_image_small {
+    width: 100%;
+    box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
+    margin-bottom: 1rem;
+    transition: 0.5s ease;
+}
+
+.result_image_small:hover {
+    opacity: 0.5;
+    cursor: pointer;
+}

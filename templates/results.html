@@ -2,9 +2,24 @@
 
 <div class="row">
     <div class="col-md-12">
-        <img src="/static/dark.png" style="width: 100%;">
+        <img src="/static/{{ id }}-dark.png" style="width: 100%;">
     </div>
 </div>
+
+<script>
+    saveNew = {{ saveNew }}
+    if (saveNew) {
+        var n = localStorage.getItem('ls_res')
+        if (n) {
+            n = n.split(",")
+            n.push("{{ id }}")
+        } else if ("{{ id }}" !== "") {
+            let n = Array()
+            n.push("{{ id }}")
+        }
+        localStorage.setItem('ls_res', n);
+    }
+</script>
 
 
 {% endblock %}
