@@ -10,7 +10,7 @@
     </div>
     <div class="col-lg-8">
         <div class="d-flex align-content-center justify-content-center">
-            <form style="width: 90%;">
+            <form style="width: 90%;" action="/" method="GET">
                 <div class="form-group">
                     <div class="form-row">
                         <div class="form-group col-md-6 ">
@@ -42,8 +42,8 @@
                             <input type="number" step="10" class="form-control" value="100" id="inputCW" placeholder="100" required>
                         </div>
                         <div class="form-group col-md-4">
-                            <label for="inputCW">Offset<i class="req"></i></label>
-                            <input type="number" step="15" class="form-control" value="30" id="inputCW" placeholder="30" required>
+                            <label for="inputOffset">Offset<i class="req"></i></label>
+                            <input type="number" step="15" class="form-control" value="30" id="inputOffset" placeholder="30" required>
                         </div>
                     </div>
                     <div class="form-row">
@@ -457,16 +457,64 @@
                             </label>
                         </div>
                     </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12" style="position: relative">
+                            <textarea spellcheck="false" cols="40" rows="8" name="js_obj" id="post_data" class="form-control" placeholder=""></textarea>
+                            <div class="btn-grey btn-random btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M21 9h2v11h-17v3l-6-4 6-4v3h15v-9zm-18-3h15v3l6-4-6-4v3h-17v11h2v-9z"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row d-flex justify-content-end">
+                        <button type="submit" class="btn btn-dark" id="submit">Submit</button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
 <script>
-    var today = new Date();
-    var dd = String(today.getDate()).padStart(2, '0');
-    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-    var yyyy = today.getFullYear();
-    $("#inputDate")[0].value = yyyy + "-" + mm + "-" + dd
+    $(document).ready(() => {
+        // Default date value to current date
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+        var yyyy = today.getFullYear();
+        $("#inputDate")[0].value = yyyy + "-" + mm + "-" + dd
+
+        // Helper Functions
+        let g = (el) => $(el).get(0).value
+        let v = (el) => $(el).get(0).valueAsDate
+
+        // Adjust Python input based on form input
+        $("input").on("change paste keyup", () => {
+            let [start, end, pStart, pEnd] = [g('#inputStartTime'), g('#inputEndTime'), g('#inputEStartTime'), g('#inputEEndTime')]
+            let [day, month, year] = [v('#inputDate').getDate(), v('#inputDate').getMonth() + 1, v('#inputDate').getFullYear()]
+            let localTimezone = $('#inputLT').get(0).checked ? null :
+                $('#inputLocalTimezone').get(0).value == "" ? null : $('#inputLocalTimezone').get(0).value
+            let [cw, offset] = [g('#inputCW'), g('#inputOffset')]
+            window.obj = {
+                "entries": {
+                    "EG": 1,
+                    "DZ": 1,
+                    "PK": 1,
+                    "IQ": 1
+                },
+                "start": start,
+                "end": end,
+                "preferrable-start": pStart,
+                "preferrable-end": pEnd,
+                "country-weight": cw,
+                "day": day,
+                "month": month,
+                "year": year,
+                "offset": offset,
+                "format": "alpha_2",
+                "local_timezone": localTimezone,
+                "type": "countries"
+            }
+            $('#post_data').get(0).value = "user_input = " + JSON.stringify(window.obj, null, 2).replace("null", "None")
+        })
+    })
 </script>
 {% endblock %}

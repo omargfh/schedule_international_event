@@ -1,4 +1,7 @@
+import json5
+
 from flask import Flask, flash, redirect, render_template, request, session
+
 from models.input import user_input
 from models.console import input_to_graphs
 
@@ -19,7 +22,7 @@ def after_request(response):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == "POST":
-        pass
+        print(request.form.get("js_obj"))
     return render_template("index.html")
 
 @app.route('/results')
